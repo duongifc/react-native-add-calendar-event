@@ -22,7 +22,7 @@
 }
 
 RCT_EXPORT_MODULE()
-    
+
 + (BOOL)requiresMainQueueSetup
 {
     return NO;
@@ -53,6 +53,7 @@ static NSString *const _endDate = @"endDate";
 static NSString *const _notes = @"notes";
 static NSString *const _url = @"url";
 static NSString *const _allDay = @"allDay";
+static NSString *const _alertHoursBefore = @"alertHoursBefore";
 
 static NSString *const MODULE_NAME= @"AddCalendarEvent";
 
@@ -173,7 +174,7 @@ RCT_EXPORT_METHOD(presentEventViewingDialog:(NSDictionary *)options resolver:(RC
     self.rejecter = reject;
     
     AddCalendarEvent * __weak weakSelf = self;
-
+    
     void (^showEventViewingController)(EKEvent *) = ^(EKEvent * event){
         EKEventViewController *controller = [[EKEventViewController alloc] init];
         controller.event = event;
@@ -196,7 +197,7 @@ RCT_EXPORT_METHOD(presentEventViewingDialog:(NSDictionary *)options resolver:(RC
 -(void)assignNavbarColorsTo: (UINavigationBar *) navigationBar
 {
     NSDictionary * navbarOptions = _eventOptions[@"navigationBarIOS"];
-
+    
     if (navbarOptions) {
         if (navbarOptions[@"tintColor"]) {
             navigationBar.tintColor = [RCTConvert UIColor:navbarOptions[@"tintColor"]];
@@ -224,7 +225,7 @@ RCT_EXPORT_METHOD(presentEventEditingDialog:(NSDictionary *)options resolver:(RC
     self.rejecter = reject;
     
     AddCalendarEvent * __weak weakSelf = self;
-
+    
     void (^showEventEditingController)(EKEvent *) = ^(EKEvent * event){
         EKEventEditViewController *controller = [[EKEventEditViewController alloc] init];
         controller.event = event;
@@ -253,7 +254,7 @@ RCT_EXPORT_METHOD(presentEventEditingDialog:(NSDictionary *)options resolver:(RC
 - (EKEvent *)createNewEventInstance {
     EKEvent *event = [EKEvent eventWithEventStore: [self getEventStoreInstance]];
     NSDictionary *options = _eventOptions;
-
+    
     event.title = [RCTConvert NSString:options[_title]];
     event.location = options[_location] ? [RCTConvert NSString:options[_location]] : nil;
     
@@ -272,6 +273,13 @@ RCT_EXPORT_METHOD(presentEventEditingDialog:(NSDictionary *)options resolver:(RC
     if (options[_allDay]) {
         event.allDay = [RCTConvert BOOL:options[_allDay]];
     }
+    if (options[_alertHoursBefore]) {
+        EKAlarm *alarm = [[EKAlarm alloc] init];
+        long relativeOffset = [RCTConvert double:options[_alertHoursBefore]];
+        alarm.relativeOffset = -(relativeOffset * 60 * 60);
+        event.alarms = @[alarm];
+    }
+    
     return event;
 }
 
@@ -337,8 +345,8 @@ RCT_EXPORT_METHOD(presentEventEditingDialog:(NSDictionary *)options resolver:(RC
 
 - (void)resolveWithAction: (NSString *)action {
     [self resolvePromise: @{
-                             @"action": action
-                             }];
+                            @"action": action
+                            }];
 }
 
 - (void)resolveWithAction: (NSString *)action andParams: (NSDictionary *) params {
