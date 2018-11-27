@@ -53,7 +53,8 @@ static NSString *const _endDate = @"endDate";
 static NSString *const _notes = @"notes";
 static NSString *const _url = @"url";
 static NSString *const _allDay = @"allDay";
-static NSString *const _alertHours = @"alertHours";
+static NSString *const _alert = @"alert";
+static NSString *const _alertDateFormat = @"alertDateFormat";
 
 static NSString *const MODULE_NAME= @"AddCalendarEvent";
 
@@ -273,10 +274,16 @@ RCT_EXPORT_METHOD(presentEventEditingDialog:(NSDictionary *)options resolver:(RC
     if (options[_allDay]) {
         event.allDay = [RCTConvert BOOL:options[_allDay]];
     }
-    if (options[_alertHours]) {
+    if (options[_alert]) {
+        NSString *dateFormatOptionValue = [RCTConvert NSString:options[_alertDateFormat]];
+        NSString *dateFormat =  dateFormatOptionValue ? dateFormatOptionValue : @"dd MMM yyyy hh:mm";
         EKAlarm *alarm = [[EKAlarm alloc] init];
-        long relativeOffset = [RCTConvert double:options[_alertHours]];
-        alarm.relativeOffset = relativeOffset * 60 * 60;
+        NSString *dateString = [RCTConvert NSString:options[_alert]];
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:dateFormat];
+        NSDate *date = [dateFormatter dateFromString:dateString];
+        
+        alarm.absoluteDate = date;
         event.alarms = @[alarm];
     }
     
